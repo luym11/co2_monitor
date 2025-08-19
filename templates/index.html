@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO2 Monitor Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .current-values {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .value-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .value-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .value-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .co2-value { color: #e74c3c; }
+        .co2-good { color: #27ae60; }
+        .co2-moderate { color: #f39c12; }
+        .co2-poor { color: #e74c3c; }
+        .temp-value { color: #f39c12; }
+        .humidity-value { color: #3498db; }
+        
+        .unit {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .control-group select,
+        .control-group input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .control-group button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .control-group button:hover {
+            background: #5a6fd8;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .chart-container {
+            height: 400px;
+            width: 100%;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-connected { background: #27ae60; }
+        .status-disconnected { background: #e74c3c; }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌬️ CO2 Monitor Dashboard</h1>
+            <p>Real-time air quality monitoring with historical data</p>
+        </div>
+        
+        <div class="current-values">
+            <div class="value-card">
+                <h3>CO₂ Concentration</h3>
+                <div class="value-number co2-value" id="co2-value">--</div>
+                <div class="unit">ppm</div>
+            </div>
+            <div class="value-card">
+                <h3>Temperature</h3>
+                <div class="value-number temp-value" id="temp-value">--</div>
+                <div class="unit">°C</div>
+            </div>
+            <div class="value-card">
+                <h3>Humidity</h3>
+                <div class="value-number humidity-value" id="humidity-value">--</div>
+                <div class="unit">%</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Time Range:</label>
+                <select id="timeRange">
+                    <option value="1">Last Hour</option>
+                    <option value="6">Last 6 Hours</option>
+                    <option value="12">Last 12 Hours</option>
+                    <option value="24" selected>Last 24 Hours</option>
+                    <option value="48">Last 48 Hours</option>
+                    <option value="168">Last Week</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Custom Range:</label>
+                <input type="datetime-local" id="startTime">
+                <input type="datetime-local" id="endTime">
+                <button onclick="loadCustomRange()">Load</button>
+            </div>
+            
+            <div class="control-group">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>CO₂ Concentration Over Time</h3>
+                <div class="chart-container" id="co2Chart"></div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>Temperature & Humidity Over Time</h3>
+                <div class="chart-container" id="tempHumidityChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let co2Chart, tempHumidityChart;
+        let updateInterval;
+        
+        // Initialize charts
+        function initCharts() {
+            // CO2 Chart
+            co2Chart = document.getElementById('co2Chart');
+            Plotly.newPlot(co2Chart, [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'CO₂',
+                line: { color: '#e74c3c', width: 3 },
+                marker: { size: 6 }
+            }], {
+                title: 'CO₂ Concentration (ppm)',
+                xaxis: { title: 'Time' },
+                yaxis: { title: 'CO₂ (ppm)' },
+                margin: { l: 60, r: 30, t: 40, b: 60 },
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+            });
+            
+            // Temperature & Humidity Chart
+            tempHumidityChart = document.getElementById('tempHumidityChart');
+            Plotly.newPlot(tempHumidityChart, [
+                {
+                    x: [],
+                    y: [],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Temperature',
+                    line: { color: '#f39c12', width: 3 },
+                    marker: { size: 6 },
+                    yaxis: 'y'
+                },
+                {
+                    x: [],
+                    y: [],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Humidity',
+                    line: { color: '#3498db', width: 3 },
+                    marker: { size: 6 },
+                    yaxis: 'y2'
+                }
+            ], {
+                title: 'Temperature & Humidity',
+                xaxis: { title: 'Time' },
+                yaxis: { title: 'Temperature (°C)', side: 'left' },
+                yaxis2: { title: 'Humidity (%)', side: 'right', overlaying: 'y' },
+                margin: { l: 60, r: 60, t: 40, b: 60 },
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+            });
+        }
+        
+        // Update current values
+        function updateCurrentValues(data) {
+            const co2Element = document.getElementById('co2-value');
+            const co2Card = co2Element.closest('.value-card');
+            
+            // Update CO2 value and color based on level
+            co2Element.textContent = data.co2;
+            if (data.co2 < 1000) {
+                co2Element.className = 'value-number co2-value co2-good';
+                co2Card.style.border = '3px solid #27ae60';
+            } else if (data.co2 < 1500) {
+                co2Element.className = 'value-number co2-value co2-moderate';
+                co2Card.style.border = '3px solid #f39c12';
+            } else {
+                co2Element.className = 'value-number co2-value co2-poor';
+                co2Card.style.border = '3px solid #e74c3c';
+            }
+            
+            document.getElementById('temp-value').textContent = data.temperature.toFixed(1);
+            document.getElementById('humidity-value').textContent = data.humidity.toFixed(1);
+            
+            // Update status
+            document.getElementById('statusIndicator').className = 'status-indicator status-connected';
+            document.getElementById('statusText').textContent = 'Connected';
+        }
+        
+        // Load historical data
+        async function loadHistory(hours = 24) {
+            try {
+                const response = await fetch(`/api/history?hours=${hours}`);
+                const data = await response.json();
+                
+                if (data.timestamps && data.timestamps.length > 0) {
+                    updateCharts(data);
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+        
+        // Load custom time range
+        async function loadCustomRange() {
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            
+            if (!startTime || !endTime) {
+                alert('Please select both start and end times');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/range?start=${startTime}&end=${endTime}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                if (data.timestamps && data.timestamps.length > 0) {
+                    updateCharts(data);
+                } else {
+                    alert('No data found for the selected time range');
+                }
+            } catch (error) {
+                console.error('Error loading custom range:', error);
+            }
+        }
+        
+        // Update charts with new data
+        function updateCharts(data) {
+            const timestamps = data.timestamps.map(t => new Date(t));
+            
+            // Update CO2 chart
+            Plotly.update(co2Chart, {
+                x: [timestamps],
+                y: [data.co2]
+            });
+            
+            // Update Temperature & Humidity chart
+            Plotly.update(tempHumidityChart, {
+                x: [timestamps, timestamps],
+                y: [data.temperature, data.humidity]
+            });
+        }
+        
+        // Poll for latest data
+        async function pollLatestData() {
+            try {
+                const response = await fetch('/api/latest');
+                const data = await response.json();
+                
+                if (data.timestamp) {
+                    updateCurrentValues(data);
+                }
+            } catch (error) {
+                console.error('Error polling data:', error);
+                document.getElementById('statusIndicator').className = 'status-indicator status-disconnected';
+                document.getElementById('statusText').textContent = 'Disconnected';
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('timeRange').addEventListener('change', function() {
+            loadHistory(parseInt(this.value));
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadHistory(24);
+            
+            // Set up polling
+            pollLatestData();
+            updateInterval = setInterval(pollLatestData, 5000);
+            
+            // Set default custom time range (last 24 hours)
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            
+            document.getElementById('endTime').value = now.toISOString().slice(0, 16);
+            document.getElementById('startTime').value = yesterday.toISOString().slice(0, 16);
+        });
+    </script>
+</body>
+</html> 
