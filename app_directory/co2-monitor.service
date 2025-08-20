@@ -1,0 +1,17 @@
+[Unit]
+Description=CO2 Monitor Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/co2_monitor/app_directory
+Environment="PATH=/home/ubuntu/co2_monitor/app_directory/venv/bin"
+ExecStart=/home/ubuntu/co2_monitor/app_directory/venv/bin/python web_app.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
