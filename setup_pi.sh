@@ -1,6 +1,16 @@
 #!/bin/bash
 
+# Exit on any error
+set -e
+
 echo "Setting up CO2 Monitor on Raspberry Pi..."
+
+# Get the actual current user and home directory
+CURRENT_USER=$USER
+USER_HOME=$HOME
+
+echo "Detected user: $CURRENT_USER"
+echo "User home: $USER_HOME"
 
 # Update system
 echo "Updating system packages..."
@@ -15,13 +25,13 @@ echo "Installing serial communication dependencies..."
 sudo apt install -y python3-serial
 
 # Add user to dialout group for serial port access
-echo "Adding user to dialout group..."
-sudo usermod -a -G dialout $USER
+echo "Adding user $CURRENT_USER to dialout group..."
+sudo usermod -a -G dialout $CURRENT_USER
 
-# Create application directory
+# Create application directory in current user's home
 echo "Creating application directory..."
-mkdir -p /home/pi/co2_monitor
-cd /home/pi/co2_monitor
+mkdir -p $USER_HOME/co2_monitor
+cd $USER_HOME/co2_monitor
 
 # Create virtual environment
 echo "Creating Python virtual environment..."
@@ -41,26 +51,40 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/co2_monitor
-Environment=PATH=/home/pi/co2_monitor/venv/bin
-ExecStart=/home/pi/co2_monitor/venv/bin/python web_app.py
+User=$CURRENT_USER
+WorkingDirectory=$USER_HOME/co2_monitor
+Environment=PATH=$USER_HOME/co2_monitor/venv/bin
+ExecStart=$USER_HOME/co2_monitor/venv/bin/python web_app.py
 Restart=always
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
+# Set proper ownership
+echo "Setting proper ownership..."
+sudo chown -R $CURRENT_USER:$CURRENT_USER $USER_HOME/co2_monitor
+
 # Enable and start service
 echo "Enabling and starting service..."
 sudo systemctl daemon-reload
 sudo systemctl enable co2-monitor
+
+# Test the service before starting
+echo "Testing service configuration..."
+sudo systemctl status co2-monitor --no-pager || echo "Service configuration test failed"
+
+# Start the service
+echo "Starting service..."
 sudo systemctl start co2-monitor
 
-# Check service status
+# Wait a moment and check service status
+sleep 3
 echo "Checking service status..."
-sudo systemctl status co2-monitor
+sudo systemctl status co2-monitor --no-pager
 
 echo ""
 echo "Setup complete! The CO2 Monitor will now start automatically on boot."
