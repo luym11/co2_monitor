@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# not running through
+
 # Exit on any error
 set -e
 
