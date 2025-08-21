@@ -42,6 +42,19 @@
             opacity: 0.9;
         }
         
+        .clock {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
         .current-values {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -184,6 +197,7 @@
         <div class="header">
             <h1>🌬️ CO2 Monitor Dashboard</h1>
             <p>Real-time air quality monitoring with historical data</p>
+            <div class="clock" id="clock">--</div>
         </div>
         
         <div class="current-values">
@@ -246,6 +260,20 @@
     <script>
         let co2Chart, tempHumidityChart;
         let updateInterval;
+        
+        // Update clock function
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            const timeString = `${year}/${month}/${day}, ${hours}:${minutes}:${seconds}`;
+            document.getElementById('clock').textContent = timeString;
+        }
         
         // Initialize charts
         function initCharts() {
@@ -413,6 +441,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             initCharts();
             loadHistory(24);
+            
+            // Initialize and start clock updates
+            updateClock();
+            setInterval(updateClock, 1000);
             
             // Set up polling
             pollLatestData();
