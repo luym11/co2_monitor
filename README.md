@@ -108,8 +108,19 @@ Edit `web_app.py` to modify:
 ### Permission Issues
 If you get permission errors accessing the serial port:
 ```bash
-sudo usermod -a -G dialout $USER
-# Then log out and back in
+# See current perms & owning group (usually 'dialout' or 'uucp')
+ls -l /dev/ttyACM0
+# See which groups you’re in
+groups
+
+# Add yourself to the device’s group (Ubuntu/Debian typically 'dialout')
+sudo usermod -aG dialout "$USER"
+
+# Apply without full logout (either option works)
+newgrp dialout   # opens a subshell with updated groups
+# or log out and back in, then verify:
+groups
+
 ```
 
 ### Data Not Appearing
