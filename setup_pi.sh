@@ -16,7 +16,7 @@ echo "User home: $USER_HOME"
 
 # Update system
 echo "Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+sudo apt update
 
 # Install Python and pip
 echo "Installing Python and pip..."
