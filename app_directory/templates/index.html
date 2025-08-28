@@ -232,6 +232,18 @@
             </div>
             
             <div class="control-group">
+                <label>MA Window:</label>
+                <select id="maWindow">
+                    <option value="5">5 points</option>
+                    <option value="10" selected>10 points</option>
+                    <option value="15">15 points</option>
+                    <option value="20">20 points</option>
+                    <option value="30">30 points</option>
+                    <option value="50">50 points</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
                 <label>Custom Range:</label>
                 <input type="datetime-local" id="startTime">
                 <input type="datetime-local" id="endTime">
@@ -260,6 +272,7 @@
     <script>
         let co2Chart, tempHumidityChart;
         let updateInterval;
+        let currentMaWindow = 10; // Default MA window size
         
         // Update clock function
         function updateClock() {
@@ -279,21 +292,33 @@
         function initCharts() {
             // CO2 Chart
             co2Chart = document.getElementById('co2Chart');
-            Plotly.newPlot(co2Chart, [{
-                x: [],
-                y: [],
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'CO₂',
-                line: { color: '#e74c3c', width: 3 },
-                marker: { size: 6 }
-            }], {
+            Plotly.newPlot(co2Chart, [
+                {
+                    x: [],
+                    y: [],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'CO₂',
+                    line: { color: '#e74c3c', width: 3 },
+                    marker: { size: 6 }
+                },
+                {
+                    x: [],
+                    y: [],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Moving Average',
+                    line: { color: '#9b59b6', width: 2, dash: 'dash' },
+                    opacity: 0.8
+                }
+            ], {
                 title: 'CO₂ Concentration (ppm)',
                 xaxis: { title: 'Time' },
                 yaxis: { title: 'CO₂ (ppm)' },
                 margin: { l: 60, r: 30, t: 40, b: 60 },
                 plot_bgcolor: 'rgba(0,0,0,0)',
-                paper_bgcolor: 'rgba(0,0,0,0)'
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                legend: { x: 0.02, y: 0.98 }
             });
             
             // Temperature & Humidity Chart
@@ -399,14 +424,40 @@
             }
         }
         
+        // Calculate moving average
+        function calculateMovingAverage(data, windowSize = 10) {
+            if (data.length < windowSize) {
+                return data; // Return original data if not enough points
+            }
+            
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < windowSize - 1) {
+                    result.push(null); // Not enough data for MA yet
+                } else {
+                    const sum = data.slice(i - windowSize + 1, i + 1).reduce((a, b) => a + b, 0);
+                    result.push(sum / windowSize);
+                }
+            }
+            return result;
+        }
+        
         // Update charts with new data
         function updateCharts(data) {
             const timestamps = data.timestamps.map(t => new Date(t));
             
-            // Update CO2 chart
+            // Calculate moving average for CO2 using current window size
+            const co2MovingAverage = calculateMovingAverage(data.co2, currentMaWindow);
+            
+            // Update CO2 chart with both raw data and moving average
             Plotly.update(co2Chart, {
-                x: [timestamps],
-                y: [data.co2]
+                x: [timestamps, timestamps],
+                y: [data.co2, co2MovingAverage]
+            });
+            
+            // Update the legend to show current MA window size
+            Plotly.restyle(co2Chart, {
+                name: ['CO₂', `Moving Average (${currentMaWindow}pt)`]
             });
             
             // Update Temperature & Humidity chart
@@ -435,6 +486,13 @@
         // Event listeners
         document.getElementById('timeRange').addEventListener('change', function() {
             loadHistory(parseInt(this.value));
+        });
+        
+        document.getElementById('maWindow').addEventListener('change', function() {
+            currentMaWindow = parseInt(this.value);
+            // Reload current data with new MA window
+            const timeRange = document.getElementById('timeRange').value;
+            loadHistory(parseInt(timeRange));
         });
         
         // Initialize
