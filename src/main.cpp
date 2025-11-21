@@ -1,6 +1,8 @@
 #include "Arduino.h"
 #include "SensirionI2cScd4x.h"
 #include "Wire.h"
+#include <U8g2lib.h>
+#include <string.h>
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 13
@@ -10,6 +12,10 @@
 #define GREEN_LED 12
 #define BLUE_LED 11
 #define YELLOW_LED 10
+
+// OLED Display - GME12864-70 with SH1106 controller
+// Using U8g2 library for SH1106 I2C (address 0x3C or 0x3D)
+U8G2_SH1106_128X64_NONAME_F_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 SensirionI2cScd4x scd4x;
 
@@ -26,6 +32,11 @@ void setup()
   pinMode(YELLOW_LED, OUTPUT);
   
   Wire.begin();
+  
+  // Initialize OLED display (GME12864-70 with SH1106)
+  display.begin();
+  display.clearBuffer();
+  display.sendBuffer();
   
   scd4x.begin(Wire, SCD41_I2C_ADDR_62);
   
@@ -106,4 +117,19 @@ void loop()
   Serial.print("C | Humidity: ");
   Serial.print(humidity, 1);
   Serial.println("%");
+  
+  // Update OLED display
+  display.clearBuffer();
+  
+  // Display CO2 value in large text (centered)
+  display.setFont(u8g2_font_logisoso42_tn);
+  char co2Str[6];
+  sprintf(co2Str, "%d", co2);
+  // Center the text (approximately)
+  int textWidth = strlen(co2Str) * 24; // Approximate width per digit
+  int xPos = (128 - textWidth) / 2;
+  display.setCursor(xPos, 50);
+  display.print(co2Str);
+  
+  display.sendBuffer();
 }
