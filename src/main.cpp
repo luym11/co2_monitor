@@ -8,7 +8,8 @@
 
 // Define LED pins
 #define GREEN_LED 12
-#define YELLOW_LED 11
+#define BLUE_LED 11
+#define YELLOW_LED 10
 
 SensirionI2cScd4x scd4x;
 
@@ -21,6 +22,7 @@ void setup()
   
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
   pinMode(YELLOW_LED, OUTPUT);
   
   Wire.begin();
@@ -74,16 +76,19 @@ void loop()
   
   // Control LEDs based on CO2 level
   if (co2 < 700) {
-    // CO2 below 700: Green LED on, Yellow LED off
+    // CO2 below 700: Green LED on, others off
     digitalWrite(GREEN_LED, HIGH);
+    digitalWrite(BLUE_LED, LOW);
     digitalWrite(YELLOW_LED, LOW);
   } else if (co2 >= 700 && co2 <= 1000) {
-    // CO2 between 700-1000: Yellow LED on, Green LED off
+    // CO2 between 700-1000: Blue LED on, others off
     digitalWrite(GREEN_LED, LOW);
-    digitalWrite(YELLOW_LED, HIGH);
+    digitalWrite(BLUE_LED, HIGH);
+    digitalWrite(YELLOW_LED, LOW);
   } else {
-    // CO2 above 1000: Both LEDs on
-    digitalWrite(GREEN_LED, HIGH);
+    // CO2 above 1000: Yellow LED on, others off
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(BLUE_LED, LOW);
     digitalWrite(YELLOW_LED, HIGH);
   }
   
