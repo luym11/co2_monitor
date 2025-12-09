@@ -10,8 +10,8 @@
 
 // Define LED pins
 #define GREEN_LED 12
-#define BLUE_LED 11
-#define YELLOW_LED 10
+#define YELLOW_LED 11
+#define RED_LED 10
 
 // OLED Display - GME12864-70 with SH1106 controller
 // Using U8g2 library for SH1106 I2C (address 0x3C or 0x3D)
@@ -28,8 +28,8 @@ void setup()
   
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
-  pinMode(BLUE_LED, OUTPUT);
   pinMode(YELLOW_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
   
   Wire.begin();
   
@@ -89,18 +89,18 @@ void loop()
   if (co2 < 800) {
     // CO2 below 800: Green LED on, others off
     digitalWrite(GREEN_LED, HIGH);
-    digitalWrite(BLUE_LED, LOW);
     digitalWrite(YELLOW_LED, LOW);
+    digitalWrite(RED_LED, LOW);
   } else if (co2 >= 800 && co2 <= 1000) {
-    // CO2 between 800-1000: Blue LED on, others off
+    // CO2 between 800-1000: Yellow LED on, others off
     digitalWrite(GREEN_LED, LOW);
-    digitalWrite(BLUE_LED, HIGH);
-    digitalWrite(YELLOW_LED, LOW);
-  } else {
-    // CO2 above 1000: Yellow LED on, others off
-    digitalWrite(GREEN_LED, LOW);
-    digitalWrite(BLUE_LED, LOW);
     digitalWrite(YELLOW_LED, HIGH);
+    digitalWrite(RED_LED, LOW);
+  } else {
+    // CO2 above 1000: Red LED on, others off
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(YELLOW_LED, LOW);
+    digitalWrite(RED_LED, HIGH);
   }
   
   // Blink built-in LED to show measurement complete

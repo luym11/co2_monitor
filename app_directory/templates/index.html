@@ -89,8 +89,8 @@
         
         .co2-value { color: #e74c3c; }
         .co2-good { color: #27ae60; }
-        .co2-moderate { color: #3498db; }
-        .co2-poor { color: #f39c12; }
+        .co2-moderate { color: #f39c12; }
+        .co2-poor { color: #e74c3c; }
         .temp-value { color: #f39c12; }
         .humidity-value { color: #3498db; }
         
@@ -367,10 +367,10 @@
                 co2Card.style.border = '3px solid #27ae60';
             } else if (data.co2 < 1000) {
                 co2Element.className = 'value-number co2-value co2-moderate';
-                co2Card.style.border = '3px solid #3498db';
+                co2Card.style.border = '3px solid #f39c12';
             } else {
                 co2Element.className = 'value-number co2-value co2-poor';
-                co2Card.style.border = '3px solid #f39c12';
+                co2Card.style.border = '3px solid #e74c3c';
             }
             
             document.getElementById('temp-value').textContent = data.temperature.toFixed(1);
