@@ -86,13 +86,13 @@ void loop()
   }
   
   // Control LEDs based on CO2 level
-  if (co2 < 700) {
-    // CO2 below 700: Green LED on, others off
+  if (co2 < 800) {
+    // CO2 below 800: Green LED on, others off
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(BLUE_LED, LOW);
     digitalWrite(YELLOW_LED, LOW);
-  } else if (co2 >= 700 && co2 <= 1000) {
-    // CO2 between 700-1000: Blue LED on, others off
+  } else if (co2 >= 800 && co2 <= 1000) {
+    // CO2 between 800-1000: Blue LED on, others off
     digitalWrite(GREEN_LED, LOW);
     digitalWrite(BLUE_LED, HIGH);
     digitalWrite(YELLOW_LED, LOW);
